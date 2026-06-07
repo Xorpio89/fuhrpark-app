@@ -1,0 +1,52 @@
+FUHRPARK-APP – AUF DAS HANDY BRINGEN
+=====================================
+
+Diese App ist eine PWA (Progressive Web App). Sie läuft im Browser,
+kann aber wie eine echte App zum Startbildschirm hinzugefügt werden.
+Die Daten werden lokal auf dem Gerät gespeichert (localStorage).
+
+WICHTIG: Eine PWA braucht eine echte HTTPS-Adresse, damit "Zum
+Startbildschirm hinzufügen" und der Offline-Modus funktionieren.
+Die Datei einfach per Mail zu schicken reicht NICHT (file:// kann
+keinen Service Worker laden und kein zuverlässiges localStorage).
+
+
+SCHNELLSTER WEG (kostenlos, ohne Account, 2 Minuten):
+------------------------------------------------------
+1. Auf https://app.netlify.com/drop gehen
+2. Den GESAMTEN Ordner "fuhrpark-app" ins Browserfenster ziehen
+3. Netlify gibt sofort eine URL aus (z.B. https://xyz123.netlify.app)
+4. Diese URL dem Freund schicken
+
+
+AUF DEM HANDY INSTALLIEREN:
+---------------------------
+iPhone (Safari):
+  - URL in Safari öffnen
+  - Teilen-Symbol (Quadrat mit Pfeil) antippen
+  - "Zum Home-Bildschirm" wählen
+  - Fertig: App-Icon liegt auf dem Startbildschirm
+
+Android (Chrome):
+  - URL in Chrome öffnen
+  - Menü (drei Punkte) antippen
+  - "App installieren" bzw. "Zum Startbildschirm hinzufügen"
+
+
+ALTERNATIVE HOSTING-WEGE (für Oliver):
+--------------------------------------
+- Vercel:        vercel deploy   (im Ordner ausführen)
+- GitHub Pages:  Ordner in ein Repo pushen, Pages aktivieren
+- Cloudflare Pages: Ordner per Wrangler oder Web-UI hochladen
+
+
+DATEN-HINWEISE:
+---------------
+- Beim ersten Start sind 12 Beispiel-Assets geladen.
+- Über das Tabellen-Symbol oben rechts kann die echte Excel
+  importiert werden (überschreibt die Beispieldaten).
+- Über das Download-Symbol wird der aktuelle Stand als .xlsx
+  exportiert – das ist die einzige echte Datensicherung!
+- Die Daten liegen NUR auf dem jeweiligen Gerät/Browser. Wer die
+  App auf mehreren Geräten oder im Team nutzen will, braucht später
+  einen kleinen Server / eine echte Datenbank.

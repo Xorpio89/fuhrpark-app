@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Fuhrpark</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fuhrpark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f2933">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #5b6470;
+  --color-text-tertiary: #9aa3ad;
+  --color-text-danger: #d12d2d;
+  --color-text-warning: #b5730a;
+  --color-text-success: #1f8a4c;
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f1f3f5;
+  --color-background-danger: #fdecec;
+  --color-background-warning: #fdf3e2;
+  --color-background-success: #e9f7ef;
+  --color-border-tertiary: #e6e8eb;
+  --color-border-secondary: #d4d8dd;
+  --border-radius-md: 9px;
+  --border-radius-lg: 13px;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #f0f2f4;
+    --color-text-secondary: #9aa3ad;
+    --color-text-tertiary: #6b747e;
+    --color-text-danger: #ff6b6b;
+    --color-text-warning: #f0a830;
+    --color-text-success: #4ade80;
+    --color-background-primary: #15191e;
+    --color-background-secondary: #232a31;
+    --color-background-danger: #3a1f1f;
+    --color-background-warning: #3a2e1a;
+    --color-background-success: #1a3326;
+    --color-border-tertiary: #2c343c;
+    --color-border-secondary: #3a434c;
+  }
+}
+* { -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; background: var(--color-background-primary); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+h2, h3, p { margin: 0; }
+button { font-family: inherit; cursor: pointer; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); color: var(--color-text-primary); font-size: 14px; transition: background 0.15s; }
+button:active { background: var(--color-background-secondary); }
+input, select, textarea { font-family: inherit; font-size: 16px; padding: 10px 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); box-sizing: border-box; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--color-text-primary); outline-offset: -1px; }
+.view { display: none; }
+.view.active { display: block; }
+.clickable { cursor: pointer; transition: background 0.15s; }
+.clickable:active { background: var(--color-background-secondary); }
+.pill { font-size: 12px; padding: 6px 12px; border-radius: 999px; white-space: nowrap; cursor: pointer; background: var(--color-background-secondary); color: var(--color-text-secondary); border: 0.5px solid transparent; }
+.pill.active { background: var(--color-text-primary); color: var(--color-background-primary); }
+.tab { flex:1; padding:9px; font-size:13px; border:none; background:transparent; color:var(--color-text-secondary); border-radius:calc(var(--border-radius-md) - 2px); }
+.tab.active { background:var(--color-background-primary); color:var(--color-text-primary); font-weight:500; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.field input, .field select, .field textarea { width: 100%; }
+.field textarea { resize: vertical; }
+.icon-btn { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink:0; }
+.action-btn { padding: 10px 6px; font-size: 13px; }
+.check-btn { width:40px; height:40px; padding:0; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--color-background-secondary); }
+</style>
+</head>
+<body>
+<div id="app" style="max-width: 480px; margin: 0 auto; padding: 1rem; padding-bottom: 3rem;">
+  <div id="view-dashboard" class="view active">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <h2 style="font-size:19px;font-weight:600;">Fuhrpark</h2>
+        <p id="asset-count" style="margin-top:2px;font-size:13px;color:var(--color-text-secondary);"></p>
+      </div>
+      <button class="icon-btn" onclick="importExcel()" title="Excel importieren"><i class="ti ti-file-spreadsheet" style="font-size:18px;"></i></button>
+      <button class="icon-btn" onclick="exportExcel()" title="Excel exportieren"><i class="ti ti-download" style="font-size:18px;"></i></button>
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:1.25rem;background:var(--color-background-secondary);padding:4px;border-radius:var(--border-radius-md);">
+      <button class="tab active" id="tab-wartung" onclick="setMode('wartung')">Wartung &amp; UVV</button>
+      <button class="tab" id="tab-reinigung" onclick="setMode('reinigung')">Reinigung</button>
+    </div>
+    <div id="kpis" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem;"></div>
+    <div id="filters" style="display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;padding-bottom:4px;"></div>
+    <div id="asset-list"></div>
+    <button onclick="showForm()" style="width:100%;margin-top:1rem;padding:12px;">
+      <i class="ti ti-plus" style="font-size:18px;vertical-align:-3px;margin-right:8px;"></i>Asset hinzufügen
+    </button>
+  </div>
+  <div id="view-detail" class="view"><div id="detail-content"></div></div>
+  <div id="view-form" class="view"><div id="form-content"></div></div>
+</div>
+
+<input type="file" id="excel-input" accept=".xlsx,.xls,.csv" style="display:none">
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const addDays = (n) => { const d = new Date(TODAY); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const todayISO = () => TODAY.toISOString().slice(0,10);
+
+let assets = [
+  {id:1, inv:'RS-07', marke:'Kalmar', modell:'DRG420', typ:'Reachstacker', spezi:'45 t', bj:2018, bh:14892, intervall:1000, lastService:14000, uvvBis:addDays(-4), reinIntervall:7, letzteReinigung:addDays(-10), notizen:''},
+  {id:2, inv:'ST-23', marke:'Linde', modell:'H50', typ:'Stapler', spezi:'Diesel 5 t', bj:2019, bh:8247, intervall:500, lastService:7759, uvvBis:addDays(88), reinIntervall:13, letzteReinigung:addDays(-14), notizen:'Hydraulikleitung 03/26 getauscht'},
+  {id:3, inv:'AK-14', marke:'Bolzoni', modell:'Klammer', typ:'Anbau', spezi:'Ballenklammer', bj:2020, bh:3104, intervall:1000, lastService:3000, uvvBis:addDays(2), reinIntervall:30, letzteReinigung:addDays(-12), notizen:''},
+  {id:4, inv:'ST-15', marke:'Jungheinrich', modell:'EFG540', typ:'Stapler', spezi:'Elektro 4 t', bj:2021, bh:4103, intervall:500, lastService:3690, uvvBis:addDays(180), reinIntervall:13, letzteReinigung:addDays(-13), notizen:''},
+  {id:5, inv:'ST-28', marke:'Toyota', modell:'8FBE20', typ:'Stapler', spezi:'Elektro 2 t', bj:2022, bh:6872, intervall:500, lastService:6500, uvvBis:addDays(5), reinIntervall:13, letzteReinigung:addDays(-2), notizen:''},
+  {id:6, inv:'AK-08', marke:'Bolzoni', modell:'Spreader', typ:'Anbau', spezi:'Container 40 ft', bj:2017, bh:6341, intervall:500, lastService:5930, uvvBis:addDays(67), reinIntervall:30, letzteReinigung:addDays(-28), notizen:''},
+  {id:7, inv:'ST-42', marke:'Linde', modell:'H30', typ:'Stapler', spezi:'Diesel 3 t', bj:2020, bh:2847, intervall:500, lastService:2500, uvvBis:addDays(112), reinIntervall:13, letzteReinigung:addDays(-12), notizen:''},
+  {id:8, inv:'AK-22', marke:'Cascade', modell:'Seitenschieber', typ:'Anbau', spezi:'Sideshift', bj:2019, bh:5218, intervall:1000, lastService:4500, uvvBis:addDays(41), reinIntervall:30, letzteReinigung:addDays(-5), notizen:''},
+  {id:9, inv:'ST-09', marke:'STILL', modell:'RX60-30', typ:'Stapler', spezi:'Elektro 3 t', bj:2021, bh:9451, intervall:500, lastService:9263, uvvBis:addDays(156), reinIntervall:13, letzteReinigung:addDays(-6), notizen:''},
+  {id:10, inv:'AK-31', marke:'Kaup', modell:'Rotator 360°', typ:'Anbau', spezi:'Drehgerät', bj:2022, bh:1847, intervall:1000, lastService:1500, uvvBis:addDays(89), reinIntervall:30, letzteReinigung:addDays(-15), notizen:''},
+  {id:11, inv:'AM-04', marke:'Linde', modell:'MT15', typ:'Ameise', spezi:'Niederhubwagen', bj:2023, bh:1203, intervall:500, lastService:1000, uvvBis:addDays(204), reinIntervall:13, letzteReinigung:addDays(-20), notizen:''},
+  {id:12, inv:'ST-51', marke:'Hyster', modell:'H10XM', typ:'Stapler', spezi:'Diesel 10 t', bj:2016, bh:11034, intervall:500, lastService:10750, uvvBis:addDays(124), reinIntervall:7, letzteReinigung:addDays(-3), notizen:''}
+];
+
+let activeFilter = 'all';
+let activeMode = 'wartung';
+let editingId = null;
+let duplicatingFrom = null;
+
+function incrementInv(inv){ const m=inv.match(/^(.+?)(\d+)$/); if(!m)return inv+'-2'; return m[1]+(parseInt(m[2])+1).toString().padStart(m[2].length,'0'); }
+function nextFreeInv(base){ let n=incrementInv(base); while(assets.some(a=>a.inv===n))n=incrementInv(n); return n; }
+function generateNumbers(start,count){ const out=[start]; let cur=start; for(let i=1;i<count;i++){ cur=incrementInv(cur); while(assets.some(a=>a.inv===cur)||out.includes(cur))cur=incrementInv(cur); out.push(cur); } return out; }
+
+function calcStatus(a){
+  const nextService=(a.lastService||0)+(a.intervall||0);
+  const restBh=nextService-(a.bh||0);
+  const uvvTage=a.uvvBis?Math.ceil((new Date(a.uvvBis)-TODAY)/86400000):999;
+  let color='success';
+  if(restBh<50||uvvTage<=0)color='danger';
+  else if(restBh<200||uvvTage<=14)color='warning';
+  return {color,restBh,uvvTage,nextService};
+}
+function calcClean(a){
+  if(!a.reinIntervall||!a.letzteReinigung)return null;
+  const seit=Math.floor((TODAY-new Date(a.letzteReinigung))/86400000);
+  const bisFaellig=a.reinIntervall-seit;
+  let color='success';
+  if(bisFaellig<0)color='danger';
+  else if(bisFaellig<=2)color='warning';
+  return {color,seit,bisFaellig};
+}
+const cVar=c=>`var(--color-text-${c})`;
+const bgVar=c=>`var(--color-background-${c})`;
+const fmt=n=>(n||0).toLocaleString('de-DE');
+const fmtDate=s=>s?new Date(s).toLocaleDateString('de-DE'):'–';
+function statusReason(a,s){
+  if(s.uvvTage<=0)return `UVV überfällig seit ${Math.abs(s.uvvTage)} Tg`;
+  if(s.uvvTage<=14)return `UVV in ${s.uvvTage} Tg`;
+  if(s.restBh<200)return `Service in ${s.restBh} Bh`;
+  return `${fmt(a.bh)} Bh`;
+}
+function cleanReason(cs){
+  if(cs.bisFaellig<0)return `überfällig seit ${Math.abs(cs.bisFaellig)} Tg`;
+  if(cs.bisFaellig===0)return `heute fällig`;
+  if(cs.bisFaellig<=2)return `in ${cs.bisFaellig} Tg fällig`;
+  return `zuletzt vor ${cs.seit} Tg`;
+}
+
+function setMode(m){ activeMode=m; document.getElementById('tab-wartung').classList.toggle('active',m==='wartung'); document.getElementById('tab-reinigung').classList.toggle('active',m==='reinigung'); renderDashboard(); }
+function setFilter(f){ activeFilter=f; renderDashboard(); }
+
+function renderDashboard(){
+  document.getElementById('asset-count').textContent=`${assets.length} Einträge · sortiert nach Dringlichkeit`;
+  if(activeMode==='wartung')renderWartung(); else renderReinigung();
+}
+function renderFiltersAndKPIs(kpiHtml){
+  document.getElementById('kpis').innerHTML=kpiHtml;
+  const types=['all',...Array.from(new Set(assets.map(a=>a.typ).filter(Boolean)))];
+  document.getElementById('filters').innerHTML=types.map(t=>{ const count=t==='all'?assets.length:assets.filter(a=>a.typ===t).length; return `<button class="pill ${activeFilter===t?'active':''}" onclick="setFilter('${t}')">${t==='all'?'Alle':t} · ${count}</button>`; }).join('');
+}
+function kpiCard(bg,labelColor,label,value,valColor){ return `<div style="background:${bg};border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:${labelColor};">${label}</p><p style="margin-top:4px;font-size:22px;font-weight:600;${valColor?'color:'+valColor+';':''}">${value}</p></div>`; }
+
+function renderWartung(){
+  let red=0,yellow=0;
+  assets.forEach(a=>{const s=calcStatus(a);if(s.color==='danger')red++;else if(s.color==='warning')yellow++;});
+  renderFiltersAndKPIs(
+    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Assets gesamt',assets.length)+
+    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Ok',assets.length-red-yellow)+
+    kpiCard('var(--color-background-danger)','var(--color-text-danger)','Überfällig',red,'var(--color-text-danger)')+
+    kpiCard('var(--color-background-warning)','var(--color-text-warning)','Bald fällig',yellow,'var(--color-text-warning)')
+  );
+  const order={danger:0,warning:1,success:2};
+  const sorted=[...assets].filter(a=>activeFilter==='all'||a.typ===activeFilter).sort((a,b)=>{const sa=calcStatus(a),sb=calcStatus(b);if(order[sa.color]!==order[sb.color])return order[sa.color]-order[sb.color];return sa.restBh-sb.restBh;});
+  document.getElementById('asset-list').innerHTML=sorted.length===0?emptyMsg():sorted.map(a=>{
+    const s=calcStatus(a);
+    return `<div class="clickable" onclick="showDetail(${a.id})" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:0.5px solid var(--color-border-tertiary);">
+      <div style="width:8px;height:8px;border-radius:50%;background:${cVar(s.color)};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><p style="font-size:14px;font-weight:500;">${a.marke} ${a.modell}</p><p style="font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv}</p></div>
+      <p style="margin-top:2px;font-size:12px;color:var(--color-text-secondary);">${a.typ} · ${a.spezi||''} · ${statusReason(a,s)}</p></div></div>`;
+  }).join('');
+}
+function renderReinigung(){
+  const withCfg=assets.filter(a=>calcClean(a));
+  let red=0,yellow=0;
+  withCfg.forEach(a=>{const cs=calcClean(a);if(cs.color==='danger')red++;else if(cs.color==='warning')yellow++;});
+  renderFiltersAndKPIs(
+    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Mit Intervall',withCfg.length)+
+    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Ok',withCfg.length-red-yellow)+
+    kpiCard('var(--color-background-danger)','var(--color-text-danger)','Überfällig',red,'var(--color-text-danger)')+
+    kpiCard('var(--color-background-warning)','var(--color-text-warning)','Bald/heute',yellow,'var(--color-text-warning)')
+  );
+  const order={danger:0,warning:1,success:2};
+  const filtered=assets.filter(a=>activeFilter==='all'||a.typ===activeFilter);
+  const cfg=filtered.filter(a=>calcClean(a)).sort((a,b)=>{const ca=calcClean(a),cb=calcClean(b);if(order[ca.color]!==order[cb.color])return order[ca.color]-order[cb.color];return ca.bisFaellig-cb.bisFaellig;});
+  const noCfg=filtered.filter(a=>!calcClean(a));
+  let html=cfg.length===0&&noCfg.length===0?emptyMsg():cfg.map(a=>{
+    const cs=calcClean(a);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:0.5px solid var(--color-border-tertiary);">
+      <div class="clickable" onclick="showDetail(${a.id})" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:2px 0;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${cVar(cs.color)};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><p style="font-size:14px;font-weight:500;">${a.marke} ${a.modell}</p><p style="font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv}</p></div>
+        <p style="margin-top:2px;font-size:12px;color:${cs.color==='success'?'var(--color-text-secondary)':cVar(cs.color)};">Reinigung ${cleanReason(cs)} · alle ${a.reinIntervall} Tg</p></div>
+      </div>
+      <button class="check-btn" onclick="markCleaned(${a.id})" title="Heute als gereinigt markieren"><i class="ti ti-check" style="font-size:18px;"></i></button>
+    </div>`;
+  }).join('');
+  if(noCfg.length){
+    html+=`<p style="margin:1.25rem 0 8px;font-size:12px;color:var(--color-text-tertiary);">Ohne Reinigungsintervall</p>`+noCfg.map(a=>
+      `<div class="clickable" onclick="showDetail(${a.id})" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:0.5px solid var(--color-border-tertiary);opacity:0.7;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--color-text-tertiary);flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><p style="font-size:14px;font-weight:500;">${a.marke} ${a.modell}</p><p style="font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv}</p></div>
+        <p style="margin-top:2px;font-size:12px;color:var(--color-text-tertiary);">kein Intervall – im Detail festlegen</p></div></div>`).join('');
+  }
+  document.getElementById('asset-list').innerHTML=html;
+}
+function emptyMsg(){ return `<p style="text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:2rem 0;">Keine Einträge</p>`; }
+
+function markCleaned(id){ const a=assets.find(x=>x.id===id); if(!a)return; a.letzteReinigung=todayISO(); saveStorage(); if(document.getElementById('view-detail').classList.contains('active'))showDetail(id); else renderDashboard(); }
+
+function showDetail(id){
+  const a=assets.find(x=>x.id===id); if(!a)return;
+  const s=calcStatus(a); const cs=calcClean(a);
+  const alertText=s.uvvTage<=0?`UVV überfällig seit ${Math.abs(s.uvvTage)} Tagen`:s.uvvTage<=14?`UVV in ${s.uvvTage} Tagen fällig`:s.restBh<200?`${a.intervall}-Stunden-Service in ${s.restBh} Bh`:null;
+  document.getElementById('detail-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
+      <button class="icon-btn" onclick="showView('dashboard')"><i class="ti ti-arrow-left" style="font-size:18px;"></i></button>
+      <div style="flex:1;min-width:0;"><h2 style="font-size:19px;font-weight:600;">${a.marke} ${a.modell}</h2>
+      <p style="margin-top:2px;font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv} · ${a.typ}${a.spezi?' · '+a.spezi:''}${a.bj?' · Bj. '+a.bj:''}</p></div>
+    </div>
+    ${alertText?`<div style="background:${bgVar(s.color)};border-radius:var(--border-radius-lg);padding:14px;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:12px;"><i class="ti ti-alert-triangle" style="font-size:20px;color:${cVar(s.color)};flex-shrink:0;"></i><p style="font-size:14px;font-weight:500;color:${cVar(s.color)};">${alertText}</p></div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem;">
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">Betriebsstunden</p><p style="margin-top:4px;font-size:22px;font-weight:600;">${fmt(a.bh)}</p></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">Reststunden Service</p><p style="margin-top:4px;font-size:22px;font-weight:600;color:${cVar(s.color)};">${s.restBh}</p></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">Letzter Service</p><p style="margin-top:4px;font-size:22px;font-weight:600;">${fmt(a.lastService)}</p><p style="margin-top:2px;font-size:11px;color:var(--color-text-tertiary);">Intervall ${fmt(a.intervall)} h</p></div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">UVV bis</p><p style="margin-top:4px;font-size:16px;font-weight:600;">${fmtDate(a.uvvBis)}</p><p style="margin-top:2px;font-size:11px;color:var(--color-text-tertiary);">${s.uvvTage>0?'in '+s.uvvTage+' Tg':Math.abs(s.uvvTage)+' Tg überfällig'}</p></div>
+    </div>
+    <div style="background:${cs&&cs.color!=='success'?bgVar(cs.color):'var(--color-background-secondary)'};border-radius:var(--border-radius-lg);padding:14px;margin-bottom:1.25rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:12px;color:var(--color-text-secondary);"><i class="ti ti-spray" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>Reinigung</p>
+          ${cs?`<p style="margin-top:4px;font-size:14px;font-weight:500;${cs.color!=='success'?'color:'+cVar(cs.color)+';':''}">${cleanReason(cs).charAt(0).toUpperCase()+cleanReason(cs).slice(1)}</p><p style="margin-top:2px;font-size:11px;color:var(--color-text-tertiary);">alle ${a.reinIntervall} Tage · zuletzt ${fmtDate(a.letzteReinigung)}</p>`:`<p style="margin-top:4px;font-size:13px;color:var(--color-text-tertiary);">Kein Intervall festgelegt</p>`}
+        </div>
+        <button class="action-btn" onclick="markCleaned(${a.id})" style="white-space:nowrap;flex-shrink:0;"><i class="ti ti-check" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Gereinigt</button>
+      </div>
+    </div>
+    ${a.notizen?`<div style="background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:14px;margin-bottom:1.25rem;"><p style="font-size:12px;color:var(--color-text-secondary);">Notizen</p><p style="margin-top:4px;font-size:13px;">${a.notizen}</p></div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <button class="action-btn" onclick="duplicateAsset(${a.id})"><i class="ti ti-copy" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Duplizieren</button>
+      <button class="action-btn" onclick="editAsset(${a.id})"><i class="ti ti-edit" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Bearbeiten</button>
+      <button class="action-btn" onclick="deleteAsset(${a.id})" style="color:var(--color-text-danger);"><i class="ti ti-trash" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Löschen</button>
+    </div>`;
+  showView('detail');
+}
+
+function showForm(){ editingId=null; duplicatingFrom=null; renderForm(); showView('form'); }
+function editAsset(id){ editingId=id; duplicatingFrom=null; renderForm(); showView('form'); }
+function duplicateAsset(id){ editingId=null; duplicatingFrom=id; renderForm(); showView('form'); }
+
+function renderForm(){
+  let a;
+  if(editingId)a=assets.find(x=>x.id===editingId);
+  else if(duplicatingFrom){const src=assets.find(x=>x.id===duplicatingFrom);a={...src,inv:nextFreeInv(src.inv),notizen:''};}
+  else a={inv:'',marke:'',modell:'',typ:'Stapler',spezi:'',bj:new Date().getFullYear(),bh:0,intervall:500,lastService:0,uvvBis:'',reinIntervall:13,letzteReinigung:todayISO(),notizen:''};
+  const title=editingId?'Asset bearbeiten':duplicatingFrom?'Asset duplizieren':'Asset hinzufügen';
+  document.getElementById('form-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;"><button class="icon-btn" onclick="cancelForm()"><i class="ti ti-x" style="font-size:18px;"></i></button><h2 style="font-size:19px;font-weight:600;">${title}</h2></div>
+    <div class="field"><label>Inventarnummer *</label><input id="f-inv" value="${a.inv}" placeholder="z. B. ST-44"></div>
+    ${!editingId?`<div class="field" style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);"><label style="display:flex;align-items:center;gap:6px;"><i class="ti ti-copy" style="font-size:14px;"></i>Anzahl auf einmal anlegen</label><input id="f-count" type="number" min="1" max="100" value="1" oninput="updateCountPreview()"><p id="count-preview" style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px;">Bei mehr als 1 wird die Inventarnummer automatisch hochgezählt</p></div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field"><label>Marke *</label><input id="f-marke" value="${a.marke}" placeholder="Linde"></div><div class="field"><label>Modell</label><input id="f-modell" value="${a.modell}" placeholder="H30"></div></div>
+    <div class="field"><label>Typ</label><select id="f-typ">${['Stapler','Reachstacker','Anbau','Ameise','Sonstiges'].map(t=>`<option ${a.typ===t?'selected':''}>${t}</option>`).join('')}</select></div>
+    <div class="field"><label>Spezifikation</label><input id="f-spezi" value="${a.spezi}" placeholder="Diesel 5 t"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field"><label>Baujahr</label><input id="f-bj" type="number" value="${a.bj||''}"></div><div class="field"><label>Betriebsstunden</label><input id="f-bh" type="number" value="${a.bh}"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field"><label>Service-Intervall (h)</label><input id="f-intervall" type="number" value="${a.intervall}"></div><div class="field"><label>Letzter Service (Bh)</label><input id="f-lastservice" type="number" value="${a.lastService}"></div></div>
+    <div class="field"><label>UVV gültig bis</label><input id="f-uvv" type="date" value="${a.uvvBis}"></div>
+    <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:12px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;"><i class="ti ti-spray" style="font-size:14px;"></i>Reinigung</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="field" style="margin-bottom:0;"><label>Intervall (Tage)</label><input id="f-reinint" type="number" min="0" value="${a.reinIntervall||''}" placeholder="z. B. 13"></div>
+        <div class="field" style="margin-bottom:0;"><label>Zuletzt gereinigt</label><input id="f-reinletzte" type="date" value="${a.letzteReinigung||''}"></div>
+      </div>
+    </div>
+    <div class="field"><label>Notizen</label><textarea id="f-notizen" rows="3">${a.notizen||''}</textarea></div>
+    <button onclick="saveAsset()" style="width:100%;padding:12px;margin-top:1rem;"><i class="ti ti-check" style="font-size:18px;vertical-align:-3px;margin-right:8px;"></i>Speichern</button>`;
+}
+function updateCountPreview(){
+  const el=document.getElementById('count-preview'); if(!el)return;
+  const inv=document.getElementById('f-inv').value.trim();
+  const count=parseInt(document.getElementById('f-count').value)||1;
+  if(!inv||count<=1){el.textContent='Bei mehr als 1 wird die Inventarnummer automatisch hochgezählt';return;}
+  const nums=generateNumbers(inv,Math.min(count,100));
+  el.innerHTML=count<=3?`Wird angelegt als: <strong style="color:var(--color-text-primary);">${nums.join(', ')}</strong>`:`Wird angelegt als: <strong style="color:var(--color-text-primary);">${nums[0]}, ${nums[1]}, …, ${nums[nums.length-1]}</strong>`;
+}
+function cancelForm(){ editingId=null; duplicatingFrom=null; showView('dashboard'); }
+function saveAsset(){
+  const v=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  const data={inv:v('f-inv').trim(),marke:v('f-marke').trim(),modell:v('f-modell').trim(),typ:v('f-typ'),spezi:v('f-spezi').trim(),bj:parseInt(v('f-bj'))||null,bh:parseInt(v('f-bh'))||0,intervall:parseInt(v('f-intervall'))||0,lastService:parseInt(v('f-lastservice'))||0,uvvBis:v('f-uvv'),reinIntervall:parseInt(v('f-reinint'))||0,letzteReinigung:v('f-reinletzte'),notizen:v('f-notizen').trim()};
+  if(!data.inv||!data.marke){alert('Inventarnummer und Marke sind Pflichtfelder.');return;}
+  if(editingId){const i=assets.findIndex(a=>a.id===editingId);assets[i]={...assets[i],...data};}
+  else{
+    if(assets.some(a=>a.inv===data.inv)){alert(`Inventarnummer "${data.inv}" existiert bereits.`);return;}
+    const count=Math.max(1,Math.min(100,parseInt(v('f-count'))||1));
+    const nums=generateNumbers(data.inv,count);
+    if(count>1){const preview=count<=3?nums.join(', '):`${nums[0]} bis ${nums[nums.length-1]}`;if(!confirm(`${count} Assets werden angelegt:\n${preview}\n\nFortfahren?`))return;}
+    const startId=(Math.max(0,...assets.map(a=>a.id))||0)+1;
+    for(let i=0;i<count;i++)assets.push({...data,id:startId+i,inv:nums[i]});
+  }
+  saveStorage(); editingId=null; duplicatingFrom=null; showView('dashboard');
+}
+function deleteAsset(id){ if(!confirm('Asset wirklich löschen?'))return; assets=assets.filter(a=>a.id!==id); saveStorage(); showView('dashboard'); }
+function showView(name){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+name).classList.add('active'); if(name==='dashboard')renderDashboard(); window.scrollTo(0,0); }
+
+function importExcel(){ document.getElementById('excel-input').click(); }
+document.getElementById('excel-input').addEventListener('change',(e)=>{
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(ev)=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:true});
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{raw:false});
+      const find=(row,...names)=>{for(const n of names)for(const k of Object.keys(row))if(k.toLowerCase().includes(n.toLowerCase()))return row[k];return '';};
+      const pDate=(v)=>{if(!v)return'';if(typeof v==='string'&&/^\d{4}-\d{2}-\d{2}/.test(v))return v.slice(0,10);const d=new Date(v);return isNaN(d)?'':d.toISOString().slice(0,10);};
+      assets=rows.map((row,i)=>({id:i+1,inv:String(find(row,'inventarnummer','inv','kennung','id')||''),marke:String(find(row,'marke','hersteller')||''),modell:String(find(row,'modell','typbez')||''),typ:String(find(row,'typ','kategorie')||'Stapler'),spezi:String(find(row,'spezi','beschreibung','detail')||''),bj:parseInt(find(row,'baujahr','bj'))||null,bh:parseInt(find(row,'betriebsstunden','stunden','bh'))||0,intervall:parseInt(find(row,'service-int','intervall'))||500,lastService:parseInt(find(row,'letzter service','last service'))||0,uvvBis:pDate(find(row,'uvv','tüv','prüfung')),reinIntervall:parseInt(find(row,'reinigungsintervall','reinint'))||0,letzteReinigung:pDate(find(row,'zuletzt gereinigt','letzte reinigung')),notizen:String(find(row,'notiz','bemerkung')||'')}));
+      saveStorage(); renderDashboard(); alert(`${assets.length} Assets importiert`);
+    }catch(err){alert('Fehler beim Import: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+});
+function exportExcel(){
+  const data=assets.map(a=>({'Inventarnummer':a.inv,'Marke':a.marke,'Modell':a.modell,'Typ':a.typ,'Spezifikation':a.spezi,'Baujahr':a.bj,'Betriebsstunden':a.bh,'Service-Intervall (h)':a.intervall,'Letzter Service (Bh)':a.lastService,'UVV gültig bis':a.uvvBis,'Reinigungsintervall (Tage)':a.reinIntervall,'Zuletzt gereinigt':a.letzteReinigung,'Notizen':a.notizen}));
+  const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Fuhrpark'); XLSX.writeFile(wb,'fuhrpark_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function saveStorage(){ try{ localStorage.setItem('fuhrpark_assets',JSON.stringify(assets)); }catch(e){} }
+function loadStorage(){ try{ const v=localStorage.getItem('fuhrpark_assets'); if(v){const p=JSON.parse(v);if(Array.isArray(p)&&p.length)assets=p;} }catch(e){} renderDashboard(); }
+
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }); }
+loadStorage();
+</script>
+</body>
+</html>
