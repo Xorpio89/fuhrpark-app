@@ -89,11 +89,10 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--color-text-
       </div>
       <button class="icon-btn" onclick="importExcel()" title="Excel importieren"><i class="ti ti-file-spreadsheet" style="font-size:18px;"></i></button>
       <button class="icon-btn" onclick="exportExcel()" title="Excel exportieren"><i class="ti ti-download" style="font-size:18px;"></i></button>
+      <button class="icon-btn" onclick="toggleSearch()" title="Suchen"><i class="ti ti-search" style="font-size:18px;"></i></button>
     </div>
-    <div style="display:flex;gap:4px;margin-bottom:1.25rem;background:var(--color-background-secondary);padding:4px;border-radius:var(--border-radius-md);">
-      <button class="tab active" id="tab-wartung" onclick="setMode('wartung')">Wartung &amp; UVV</button>
-      <button class="tab" id="tab-reinigung" onclick="setMode('reinigung')">Reinigung</button>
-    </div>
+    <div id="searchbar" style="margin-bottom:1rem;"></div>
+    <div id="ablese-banner" style="margin-bottom:1rem;"></div>
     <div id="kpis" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem;"></div>
     <div id="filters" style="display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;padding-bottom:4px;"></div>
     <div id="asset-list"></div>
@@ -103,6 +102,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--color-text-
   </div>
   <div id="view-detail" class="view"><div id="detail-content"></div></div>
   <div id="view-form" class="view"><div id="form-content"></div></div>
+  <div id="view-rundgang" class="view"><div id="rundgang-content"></div></div>
 </div>
 
 <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" style="display:none">
@@ -114,24 +114,25 @@ const addDays = (n) => { const d = new Date(TODAY); d.setDate(d.getDate()+n); re
 const todayISO = () => TODAY.toISOString().slice(0,10);
 
 let assets = [
-  {id:1, inv:'RS-07', marke:'Kalmar', modell:'DRG420', typ:'Reachstacker', spezi:'45 t', bj:2018, bh:14892, intervall:1000, lastService:14000, uvvBis:addDays(-4), reinIntervall:7, letzteReinigung:addDays(-10), notizen:''},
-  {id:2, inv:'ST-23', marke:'Linde', modell:'H50', typ:'Stapler', spezi:'Diesel 5 t', bj:2019, bh:8247, intervall:500, lastService:7759, uvvBis:addDays(88), reinIntervall:13, letzteReinigung:addDays(-14), notizen:'Hydraulikleitung 03/26 getauscht'},
-  {id:3, inv:'AK-14', marke:'Bolzoni', modell:'Klammer', typ:'Anbau', spezi:'Ballenklammer', bj:2020, bh:3104, intervall:1000, lastService:3000, uvvBis:addDays(2), reinIntervall:30, letzteReinigung:addDays(-12), notizen:''},
-  {id:4, inv:'ST-15', marke:'Jungheinrich', modell:'EFG540', typ:'Stapler', spezi:'Elektro 4 t', bj:2021, bh:4103, intervall:500, lastService:3690, uvvBis:addDays(180), reinIntervall:13, letzteReinigung:addDays(-13), notizen:''},
-  {id:5, inv:'ST-28', marke:'Toyota', modell:'8FBE20', typ:'Stapler', spezi:'Elektro 2 t', bj:2022, bh:6872, intervall:500, lastService:6500, uvvBis:addDays(5), reinIntervall:13, letzteReinigung:addDays(-2), notizen:''},
-  {id:6, inv:'AK-08', marke:'Bolzoni', modell:'Spreader', typ:'Anbau', spezi:'Container 40 ft', bj:2017, bh:6341, intervall:500, lastService:5930, uvvBis:addDays(67), reinIntervall:30, letzteReinigung:addDays(-28), notizen:''},
-  {id:7, inv:'ST-42', marke:'Linde', modell:'H30', typ:'Stapler', spezi:'Diesel 3 t', bj:2020, bh:2847, intervall:500, lastService:2500, uvvBis:addDays(112), reinIntervall:13, letzteReinigung:addDays(-12), notizen:''},
-  {id:8, inv:'AK-22', marke:'Cascade', modell:'Seitenschieber', typ:'Anbau', spezi:'Sideshift', bj:2019, bh:5218, intervall:1000, lastService:4500, uvvBis:addDays(41), reinIntervall:30, letzteReinigung:addDays(-5), notizen:''},
-  {id:9, inv:'ST-09', marke:'STILL', modell:'RX60-30', typ:'Stapler', spezi:'Elektro 3 t', bj:2021, bh:9451, intervall:500, lastService:9263, uvvBis:addDays(156), reinIntervall:13, letzteReinigung:addDays(-6), notizen:''},
-  {id:10, inv:'AK-31', marke:'Kaup', modell:'Rotator 360°', typ:'Anbau', spezi:'Drehgerät', bj:2022, bh:1847, intervall:1000, lastService:1500, uvvBis:addDays(89), reinIntervall:30, letzteReinigung:addDays(-15), notizen:''},
-  {id:11, inv:'AM-04', marke:'Linde', modell:'MT15', typ:'Ameise', spezi:'Niederhubwagen', bj:2023, bh:1203, intervall:500, lastService:1000, uvvBis:addDays(204), reinIntervall:13, letzteReinigung:addDays(-20), notizen:''},
-  {id:12, inv:'ST-51', marke:'Hyster', modell:'H10XM', typ:'Stapler', spezi:'Diesel 10 t', bj:2016, bh:11034, intervall:500, lastService:10750, uvvBis:addDays(124), reinIntervall:7, letzteReinigung:addDays(-3), notizen:''}
+  {id:1, inv:'SK-45', marke:'Linde', modell:'H30', typ:'Stapler', spezi:'Diesel 3 t', bj:2020, bh:2847, intervall:500, lastService:2500, uvvBis:addDays(112), letzteAblesung:addDays(-2), ableseIntervallTage:10, notizen:''},
+  {id:2, inv:'SK-88E', marke:'Toyota', modell:'8FBE20', typ:'Stapler', spezi:'Elektro 2 t', bj:2022, bh:6872, intervall:500, lastService:6500, uvvBis:addDays(60), letzteAblesung:addDays(-11), ableseIntervallTage:10, notizen:''}
 ];
 
 let activeFilter = 'all';
 let activeMode = 'wartung';
 let editingId = null;
 let duplicatingFrom = null;
+const DEFAULT_ABLESE_TAGE = 10;    // Default Ablese-Intervall pro Gerät (Tage)
+let onlyDue = true;                // Standard: nur fällige (orange/rot) zeigen
+let viewDepth = 0;                 // 0 = Dashboard (Root), 1 = Unteransicht
+let rundgangQueue = [];
+let rundgangIdx = 0;
+let searchOpen = false;
+let searchQuery = '';
+
+function toggleSearch(){ searchOpen=!searchOpen; if(!searchOpen)searchQuery=''; renderSearchBar(); renderDashboard(); if(searchOpen)setTimeout(()=>{const i=document.getElementById('search-input');if(i)i.focus();},30); }
+function renderSearchBar(){ const el=document.getElementById('searchbar'); if(!el)return; el.innerHTML=searchOpen?`<div style="display:flex;gap:8px;align-items:center;"><input id="search-input" value="${searchQuery.replace(/"/g,'&quot;')}" oninput="onSearchInput(this.value)" placeholder="Fahrzeug suchen (Nr., Marke, Modell …)" style="flex:1;" autocomplete="off"><button class="icon-btn" onclick="toggleSearch()" title="Suche schließen"><i class="ti ti-x" style="font-size:18px;"></i></button></div>`:''; }
+function onSearchInput(v){ searchQuery=v; renderDashboard(); }
 
 function incrementInv(inv){ const m=inv.match(/^(.+?)(\d+)$/); if(!m)return inv+'-2'; return m[1]+(parseInt(m[2])+1).toString().padStart(m[2].length,'0'); }
 function nextFreeInv(base){ let n=incrementInv(base); while(assets.some(a=>a.inv===n))n=incrementInv(n); return n; }
@@ -155,6 +156,17 @@ function calcClean(a){
   else if(bisFaellig<=2)color='warning';
   return {color,seit,bisFaellig};
 }
+function calcAblesung(a){
+  const iv=a.ableseIntervallTage||DEFAULT_ABLESE_TAGE;
+  if(!a.letzteAblesung)return {color:'danger',seit:Infinity,bisFaellig:-Infinity,nie:true};
+  const seit=Math.floor((TODAY-new Date(a.letzteAblesung))/86400000);
+  const bisFaellig=iv-seit;
+  let color='success';
+  if(bisFaellig<0)color='danger';
+  else if(bisFaellig<=2)color='warning';
+  return {color,seit,bisFaellig,nie:false};
+}
+function dueForReading(a){ return calcAblesung(a).color!=='success'; }
 const cVar=c=>`var(--color-text-${c})`;
 const bgVar=c=>`var(--color-background-${c})`;
 const fmt=n=>(n||0).toLocaleString('de-DE');
@@ -172,102 +184,197 @@ function cleanReason(cs){
   return `zuletzt vor ${cs.seit} Tg`;
 }
 
-function setMode(m){ activeMode=m; document.getElementById('tab-wartung').classList.toggle('active',m==='wartung'); document.getElementById('tab-reinigung').classList.toggle('active',m==='reinigung'); renderDashboard(); }
 function setFilter(f){ activeFilter=f; renderDashboard(); }
 
 function renderDashboard(){
-  document.getElementById('asset-count').textContent=`${assets.length} Einträge · sortiert nach Dringlichkeit`;
-  if(activeMode==='wartung')renderWartung(); else renderReinigung();
+  if(searchQuery.trim()){
+    document.getElementById('ablese-banner').innerHTML='';
+    document.getElementById('kpis').innerHTML='';
+    document.getElementById('filters').innerHTML='';
+    renderSearchResults();
+    return;
+  }
+  document.getElementById('asset-count').textContent=`${assets.length} Fahrzeuge · sortiert nach Dringlichkeit`;
+  renderAbleseBanner();
+  renderUnified();
 }
+function renderAbleseBanner(){
+  const el=document.getElementById('ablese-banner'); if(!el)return;
+  const due=assets.filter(dueForReading);
+  if(due.length===0){ el.innerHTML=''; return; }
+  const overdue=due.filter(a=>calcAblesung(a).color==='danger').length;
+  const col=overdue>0?'danger':'warning';
+  el.innerHTML=`<div style="background:${bgVar(col)};border-radius:var(--border-radius-lg);padding:14px;display:flex;align-items:center;gap:12px;">
+    <i class="ti ti-clock-hour-4" style="font-size:22px;color:${cVar(col)};flex-shrink:0;"></i>
+    <div style="flex:1;min-width:0;"><p style="font-size:14px;font-weight:500;color:${cVar(col)};">${due.length} Gerät${due.length===1?'':'e'} zur Ablesung fällig</p>
+    <p style="font-size:11px;color:var(--color-text-secondary);margin-top:2px;">Betriebsstunden erfassen</p></div>
+    <button onclick="startRundgang()" style="white-space:nowrap;flex-shrink:0;padding:9px 14px;font-size:13px;"><i class="ti ti-walk" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Rundgang</button>
+  </div>`;
+}
+function toggleOnlyDue(){ onlyDue=!onlyDue; renderDashboard(); }
 function renderFiltersAndKPIs(kpiHtml){
   document.getElementById('kpis').innerHTML=kpiHtml;
   const types=['all',...Array.from(new Set(assets.map(a=>a.typ).filter(Boolean)))];
-  document.getElementById('filters').innerHTML=types.map(t=>{ const count=t==='all'?assets.length:assets.filter(a=>a.typ===t).length; return `<button class="pill ${activeFilter===t?'active':''}" onclick="setFilter('${t}')">${t==='all'?'Alle':t} · ${count}</button>`; }).join('');
+  const dueToggle=`<button class="pill ${onlyDue?'active':''}" onclick="toggleOnlyDue()" style="flex-shrink:0;"><i class="ti ti-filter" style="font-size:13px;vertical-align:-2px;margin-right:2px;"></i>Nur fällige</button>`;
+  const typePills=types.map(t=>{ const count=t==='all'?assets.length:assets.filter(a=>a.typ===t).length; return `<button class="pill ${activeFilter===t?'active':''}" onclick="setFilter('${t}')">${t==='all'?'Alle':t} · ${count}</button>`; }).join('');
+  document.getElementById('filters').innerHTML=dueToggle+typePills;
 }
 function kpiCard(bg,labelColor,label,value,valColor){ return `<div style="background:${bg};border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:${labelColor};">${label}</p><p style="margin-top:4px;font-size:22px;font-weight:600;${valColor?'color:'+valColor+';':''}">${value}</p></div>`; }
 
-function renderWartung(){
+function combinedStatus(a){
+  const s=calcStatus(a), r=calcAblesung(a);
+  const rank={success:2,warning:1,danger:0};
+  const color=rank[s.color]<=rank[r.color]?s.color:r.color;
+  return {color,s,r};
+}
+function issueList(a){
+  const s=calcStatus(a), r=calcAblesung(a); const out=[];
+  if(s.uvvTage<=0)out.push({c:'danger',t:`UVV überfällig ${Math.abs(s.uvvTage)} Tg`});
+  else if(s.uvvTage<=14)out.push({c:'warning',t:`UVV in ${s.uvvTage} Tg`});
+  if(s.restBh<50)out.push({c:'danger',t:`Service in ${s.restBh} Bh`});
+  else if(s.restBh<200)out.push({c:'warning',t:`Service in ${s.restBh} Bh`});
+  if(r.nie)out.push({c:'danger',t:'nie abgelesen'});
+  else if(r.bisFaellig<0)out.push({c:'danger',t:`Ablesung überfällig ${Math.abs(r.bisFaellig)} Tg`});
+  else if(r.bisFaellig<=2)out.push({c:'warning',t:'Ablesung fällig'});
+  const rk={danger:0,warning:1};
+  out.sort((x,y)=>rk[x.c]-rk[y.c]);
+  return out;
+}
+function rowReason(a){
+  const iss=issueList(a);
+  if(iss.length===0)return `<span style="color:var(--color-text-secondary);">aktuell · ${fmt(a.bh)} Bh</span>`;
+  return `<span style="color:${cVar(iss[0].c)};">${iss.map(i=>i.t).join(' · ')}</span>`;
+}
+function assetRow(a){
+  const c=combinedStatus(a).color;
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:0.5px solid var(--color-border-tertiary);">
+    <div class="clickable" onclick="showDetail(${a.id})" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:2px 0;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${cVar(c)};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><p style="font-size:14px;font-weight:500;">${a.marke} ${a.modell}</p><p style="font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv}</p></div>
+      <p style="margin-top:2px;font-size:12px;">${rowReason(a)}</p></div>
+    </div>
+    <button class="check-btn" onclick="quickBh(${a.id})" title="Betriebsstunden eintragen"><i class="ti ti-pencil-plus" style="font-size:18px;"></i></button>
+  </div>`;
+}
+function renderUnified(){
   let red=0,yellow=0;
-  assets.forEach(a=>{const s=calcStatus(a);if(s.color==='danger')red++;else if(s.color==='warning')yellow++;});
+  assets.forEach(a=>{const c=combinedStatus(a).color;if(c==='danger')red++;else if(c==='warning')yellow++;});
   renderFiltersAndKPIs(
-    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Assets gesamt',assets.length)+
+    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Fahrzeuge',assets.length)+
     kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Ok',assets.length-red-yellow)+
     kpiCard('var(--color-background-danger)','var(--color-text-danger)','Überfällig',red,'var(--color-text-danger)')+
     kpiCard('var(--color-background-warning)','var(--color-text-warning)','Bald fällig',yellow,'var(--color-text-warning)')
   );
   const order={danger:0,warning:1,success:2};
-  const sorted=[...assets].filter(a=>activeFilter==='all'||a.typ===activeFilter).sort((a,b)=>{const sa=calcStatus(a),sb=calcStatus(b);if(order[sa.color]!==order[sb.color])return order[sa.color]-order[sb.color];return sa.restBh-sb.restBh;});
-  document.getElementById('asset-list').innerHTML=sorted.length===0?emptyMsg():sorted.map(a=>{
-    const s=calcStatus(a);
-    return `<div class="clickable" onclick="showDetail(${a.id})" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:0.5px solid var(--color-border-tertiary);">
-      <div style="width:8px;height:8px;border-radius:50%;background:${cVar(s.color)};flex-shrink:0;"></div>
-      <div style="flex:1;min-width:0;"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><p style="font-size:14px;font-weight:500;">${a.marke} ${a.modell}</p><p style="font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv}</p></div>
-      <p style="margin-top:2px;font-size:12px;color:var(--color-text-secondary);">${a.typ} · ${a.spezi||''} · ${statusReason(a,s)}</p></div></div>`;
-  }).join('');
+  const sorted=[...assets].filter(a=>(activeFilter==='all'||a.typ===activeFilter)&&(!onlyDue||combinedStatus(a).color!=='success'))
+    .sort((a,b)=>{const ca=combinedStatus(a),cb=combinedStatus(b);if(order[ca.color]!==order[cb.color])return order[ca.color]-order[cb.color];if(ca.s.uvvTage!==cb.s.uvvTage)return ca.s.uvvTage-cb.s.uvvTage;return ca.s.restBh-cb.s.restBh;});
+  document.getElementById('asset-list').innerHTML=sorted.length===0?emptyMsg():sorted.map(assetRow).join('');
 }
-function renderReinigung(){
-  const withCfg=assets.filter(a=>calcClean(a));
-  let red=0,yellow=0;
-  withCfg.forEach(a=>{const cs=calcClean(a);if(cs.color==='danger')red++;else if(cs.color==='warning')yellow++;});
-  renderFiltersAndKPIs(
-    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Mit Intervall',withCfg.length)+
-    kpiCard('var(--color-background-secondary)','var(--color-text-secondary)','Ok',withCfg.length-red-yellow)+
-    kpiCard('var(--color-background-danger)','var(--color-text-danger)','Überfällig',red,'var(--color-text-danger)')+
-    kpiCard('var(--color-background-warning)','var(--color-text-warning)','Bald/heute',yellow,'var(--color-text-warning)')
-  );
-  const order={danger:0,warning:1,success:2};
-  const filtered=assets.filter(a=>activeFilter==='all'||a.typ===activeFilter);
-  const cfg=filtered.filter(a=>calcClean(a)).sort((a,b)=>{const ca=calcClean(a),cb=calcClean(b);if(order[ca.color]!==order[cb.color])return order[ca.color]-order[cb.color];return ca.bisFaellig-cb.bisFaellig;});
-  const noCfg=filtered.filter(a=>!calcClean(a));
-  let html=cfg.length===0&&noCfg.length===0?emptyMsg():cfg.map(a=>{
-    const cs=calcClean(a);
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:0.5px solid var(--color-border-tertiary);">
-      <div class="clickable" onclick="showDetail(${a.id})" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:2px 0;">
-        <div style="width:8px;height:8px;border-radius:50%;background:${cVar(cs.color)};flex-shrink:0;"></div>
-        <div style="flex:1;min-width:0;"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><p style="font-size:14px;font-weight:500;">${a.marke} ${a.modell}</p><p style="font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv}</p></div>
-        <p style="margin-top:2px;font-size:12px;color:${cs.color==='success'?'var(--color-text-secondary)':cVar(cs.color)};">Reinigung ${cleanReason(cs)} · alle ${a.reinIntervall} Tg</p></div>
-      </div>
-      <button class="check-btn" onclick="markCleaned(${a.id})" title="Heute als gereinigt markieren"><i class="ti ti-check" style="font-size:18px;"></i></button>
-    </div>`;
-  }).join('');
-  if(noCfg.length){
-    html+=`<p style="margin:1.25rem 0 8px;font-size:12px;color:var(--color-text-tertiary);">Ohne Reinigungsintervall</p>`+noCfg.map(a=>
-      `<div class="clickable" onclick="showDetail(${a.id})" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:0.5px solid var(--color-border-tertiary);opacity:0.7;">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--color-text-tertiary);flex-shrink:0;"></div>
-        <div style="flex:1;min-width:0;"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;"><p style="font-size:14px;font-weight:500;">${a.marke} ${a.modell}</p><p style="font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv}</p></div>
-        <p style="margin-top:2px;font-size:12px;color:var(--color-text-tertiary);">kein Intervall – im Detail festlegen</p></div></div>`).join('');
-  }
-  document.getElementById('asset-list').innerHTML=html;
+function fuzzyScore(q,text){
+  q=q.toLowerCase().trim(); text=(text||'').toLowerCase();
+  if(!q)return 0;
+  const idx=text.indexOf(q); if(idx>=0)return 1000-idx;
+  let ti=0,gaps=0,last=-1;
+  for(let qi=0;qi<q.length;qi++){ const ch=q[qi]; let found=-1; for(;ti<text.length;ti++){if(text[ti]===ch){found=ti;ti++;break;}} if(found<0)return -1; if(last>=0)gaps+=found-last-1; last=found; }
+  return 500-gaps;
+}
+function searchAssets(q){
+  return assets.map(a=>{const hay=`${a.inv} ${a.marke} ${a.modell} ${a.typ} ${a.spezi} ${a.notizen}`;const score=Math.max(fuzzyScore(q,hay),fuzzyScore(q,a.inv),fuzzyScore(q,`${a.marke} ${a.modell}`));return {a,score};}).filter(x=>x.score>=0).sort((x,y)=>y.score-x.score);
+}
+function renderSearchResults(){
+  const q=searchQuery.trim(); const res=searchAssets(q);
+  document.getElementById('asset-count').textContent=`${res.length} Treffer für „${q}“`;
+  document.getElementById('asset-list').innerHTML=res.length===0?`<p style="text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:2rem 0;">Kein Fahrzeug gefunden</p>`:res.map(x=>assetRow(x.a)).join('');
 }
 function emptyMsg(){ return `<p style="text-align:center;color:var(--color-text-tertiary);font-size:13px;padding:2rem 0;">Keine Einträge</p>`; }
 
 function markCleaned(id){ const a=assets.find(x=>x.id===id); if(!a)return; a.letzteReinigung=todayISO(); saveStorage(); if(document.getElementById('view-detail').classList.contains('active'))showDetail(id); else renderDashboard(); }
 
+function ableseReason(r){
+  if(r.nie)return 'noch nie abgelesen';
+  if(r.bisFaellig<0)return `überfällig seit ${Math.abs(r.bisFaellig)} Tg`;
+  if(r.bisFaellig===0)return 'heute fällig';
+  if(r.bisFaellig<=2)return `in ${r.bisFaellig} Tg fällig`;
+  return `vor ${r.seit} Tg abgelesen`;
+}
+function quickBh(id){
+  const a=assets.find(x=>x.id===id); if(!a)return;
+  const v=prompt(`${a.marke} ${a.modell} (${a.inv})\nAktueller Betriebsstunden-Zählerstand:`, a.bh);
+  if(v===null)return;
+  const val=parseInt(v); if(isNaN(val)){alert('Ungültiger Wert.');return;}
+  if(val<a.bh && !confirm(`Neuer Wert (${fmt(val)}) ist kleiner als bisher (${fmt(a.bh)}). Trotzdem speichern?`))return;
+  a.bh=val; a.letzteAblesung=todayISO(); saveStorage();
+  if(document.getElementById('view-detail').classList.contains('active'))showDetail(id); else renderDashboard();
+}
+
+function startRundgang(){
+  const order={danger:0,warning:1,success:2};
+  rundgangQueue=[...assets].filter(dueForReading).sort((a,b)=>{const ra=calcAblesung(a),rb=calcAblesung(b);if(order[ra.color]!==order[rb.color])return order[ra.color]-order[rb.color];return ra.bisFaellig-rb.bisFaellig;}).map(a=>a.id);
+  rundgangIdx=0; renderRundgang(); pushView('rundgang');
+}
+function renderRundgang(){
+  const el=document.getElementById('rundgang-content');
+  if(rundgangIdx>=rundgangQueue.length){
+    el.innerHTML=`<div style="text-align:center;padding:3rem 1rem;">
+      <i class="ti ti-circle-check" style="font-size:48px;color:var(--color-text-success);"></i>
+      <h2 style="font-size:19px;font-weight:600;margin-top:1rem;">Rundgang abgeschlossen</h2>
+      <p style="margin-top:6px;font-size:13px;color:var(--color-text-secondary);">Alle fälligen Geräte sind erledigt.</p>
+      <button onclick="popToDashboard()" style="margin-top:1.5rem;padding:12px 24px;">Zur Übersicht</button>
+    </div>`;
+    return;
+  }
+  const a=assets.find(x=>x.id===rundgangQueue[rundgangIdx]); if(!a){rundgangIdx++;renderRundgang();return;}
+  const r=calcAblesung(a);
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
+      <button class="icon-btn" onclick="popToDashboard()"><i class="ti ti-x" style="font-size:18px;"></i></button>
+      <div style="flex:1;"><p style="font-size:12px;color:var(--color-text-secondary);">Rundgang · Betriebsstunden</p><p style="font-size:13px;font-weight:500;">${rundgangIdx+1} / ${rundgangQueue.length}</p></div>
+    </div>
+    <div style="height:4px;background:var(--color-background-secondary);border-radius:999px;margin-bottom:1.75rem;overflow:hidden;"><div style="height:100%;width:${Math.round(rundgangIdx/rundgangQueue.length*100)}%;background:var(--color-text-primary);"></div></div>
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <h2 style="font-size:24px;font-weight:600;">${a.marke} ${a.modell}</h2>
+      <p style="margin-top:4px;font-size:13px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv} · ${a.typ}${a.spezi?' · '+a.spezi:''}</p>
+      <p style="margin-top:8px;font-size:12px;color:${cVar(r.color)};">${ableseReason(r)} · bisher ${fmt(a.bh)} Bh</p>
+    </div>
+    <div class="field"><label style="text-align:center;font-size:13px;">Aktueller Zählerstand (Bh)</label>
+      <input id="rundgang-bh" type="number" inputmode="numeric" value="${a.bh}" style="font-size:28px;text-align:center;font-weight:600;padding:16px;"></div>
+    <button onclick="rundgangSave()" style="width:100%;padding:14px;margin-top:0.5rem;font-size:15px;font-weight:500;background:var(--color-text-primary);color:var(--color-background-primary);"><i class="ti ti-check" style="font-size:18px;vertical-align:-3px;margin-right:8px;"></i>Speichern &amp; weiter</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+      <button onclick="rundgangUnchanged()" class="action-btn">Unverändert</button>
+      <button onclick="rundgangSkip()" class="action-btn">Überspringen</button>
+    </div>`;
+  setTimeout(()=>{const i=document.getElementById('rundgang-bh');if(i){i.focus();i.select();}},50);
+}
+function rundgangSave(){
+  const a=assets.find(x=>x.id===rundgangQueue[rundgangIdx]); if(!a)return;
+  const el=document.getElementById('rundgang-bh'); const val=parseInt(el.value);
+  if(isNaN(val)){alert('Bitte einen Zählerstand eingeben.');return;}
+  if(val<a.bh && !confirm(`Neuer Wert (${fmt(val)}) ist kleiner als bisher (${fmt(a.bh)}). Trotzdem speichern?`))return;
+  a.bh=val; a.letzteAblesung=todayISO(); saveStorage();
+  rundgangIdx++; renderRundgang();
+}
+function rundgangUnchanged(){
+  const a=assets.find(x=>x.id===rundgangQueue[rundgangIdx]); if(a){a.letzteAblesung=todayISO();saveStorage();}
+  rundgangIdx++; renderRundgang();
+}
+function rundgangSkip(){ rundgangIdx++; renderRundgang(); }
+
 function showDetail(id){
   const a=assets.find(x=>x.id===id); if(!a)return;
-  const s=calcStatus(a); const cs=calcClean(a);
+  const s=calcStatus(a); const cs=calcClean(a); const ra=calcAblesung(a);
   const alertText=s.uvvTage<=0?`UVV überfällig seit ${Math.abs(s.uvvTage)} Tagen`:s.uvvTage<=14?`UVV in ${s.uvvTage} Tagen fällig`:s.restBh<200?`${a.intervall}-Stunden-Service in ${s.restBh} Bh`:null;
   document.getElementById('detail-content').innerHTML=`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
-      <button class="icon-btn" onclick="showView('dashboard')"><i class="ti ti-arrow-left" style="font-size:18px;"></i></button>
+      <button class="icon-btn" onclick="popToDashboard()"><i class="ti ti-arrow-left" style="font-size:18px;"></i></button>
       <div style="flex:1;min-width:0;"><h2 style="font-size:19px;font-weight:600;">${a.marke} ${a.modell}</h2>
       <p style="margin-top:2px;font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono);">${a.inv} · ${a.typ}${a.spezi?' · '+a.spezi:''}${a.bj?' · Bj. '+a.bj:''}</p></div>
     </div>
     ${alertText?`<div style="background:${bgVar(s.color)};border-radius:var(--border-radius-lg);padding:14px;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:12px;"><i class="ti ti-alert-triangle" style="font-size:20px;color:${cVar(s.color)};flex-shrink:0;"></i><p style="font-size:14px;font-weight:500;color:${cVar(s.color)};">${alertText}</p></div>`:''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem;">
-      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">Betriebsstunden</p><p style="margin-top:4px;font-size:22px;font-weight:600;">${fmt(a.bh)}</p></div>
+      <div class="clickable" onclick="quickBh(${a.id})" style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><div style="display:flex;align-items:center;justify-content:space-between;"><p style="font-size:12px;color:var(--color-text-secondary);">Betriebsstunden</p><i class="ti ti-pencil-plus" style="font-size:14px;color:var(--color-text-tertiary);"></i></div><p style="margin-top:4px;font-size:22px;font-weight:600;">${fmt(a.bh)}</p><p style="margin-top:2px;font-size:11px;color:${ra.color==='success'?'var(--color-text-tertiary)':cVar(ra.color)};">${ableseReason(ra)} · alle ${a.ableseIntervallTage||DEFAULT_ABLESE_TAGE} Tg</p></div>
       <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">Reststunden Service</p><p style="margin-top:4px;font-size:22px;font-weight:600;color:${cVar(s.color)};">${s.restBh}</p></div>
       <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">Letzter Service</p><p style="margin-top:4px;font-size:22px;font-weight:600;">${fmt(a.lastService)}</p><p style="margin-top:2px;font-size:11px;color:var(--color-text-tertiary);">Intervall ${fmt(a.intervall)} h</p></div>
       <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;"><p style="font-size:12px;color:var(--color-text-secondary);">UVV bis</p><p style="margin-top:4px;font-size:16px;font-weight:600;">${fmtDate(a.uvvBis)}</p><p style="margin-top:2px;font-size:11px;color:var(--color-text-tertiary);">${s.uvvTage>0?'in '+s.uvvTage+' Tg':Math.abs(s.uvvTage)+' Tg überfällig'}</p></div>
-    </div>
-    <div style="background:${cs&&cs.color!=='success'?bgVar(cs.color):'var(--color-background-secondary)'};border-radius:var(--border-radius-lg);padding:14px;margin-bottom:1.25rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-        <div style="flex:1;min-width:0;">
-          <p style="font-size:12px;color:var(--color-text-secondary);"><i class="ti ti-spray" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>Reinigung</p>
-          ${cs?`<p style="margin-top:4px;font-size:14px;font-weight:500;${cs.color!=='success'?'color:'+cVar(cs.color)+';':''}">${cleanReason(cs).charAt(0).toUpperCase()+cleanReason(cs).slice(1)}</p><p style="margin-top:2px;font-size:11px;color:var(--color-text-tertiary);">alle ${a.reinIntervall} Tage · zuletzt ${fmtDate(a.letzteReinigung)}</p>`:`<p style="margin-top:4px;font-size:13px;color:var(--color-text-tertiary);">Kein Intervall festgelegt</p>`}
-        </div>
-        <button class="action-btn" onclick="markCleaned(${a.id})" style="white-space:nowrap;flex-shrink:0;"><i class="ti ti-check" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Gereinigt</button>
-      </div>
     </div>
     ${a.notizen?`<div style="background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:14px;margin-bottom:1.25rem;"><p style="font-size:12px;color:var(--color-text-secondary);">Notizen</p><p style="margin-top:4px;font-size:13px;">${a.notizen}</p></div>`:''}
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
@@ -275,36 +382,36 @@ function showDetail(id){
       <button class="action-btn" onclick="editAsset(${a.id})"><i class="ti ti-edit" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Bearbeiten</button>
       <button class="action-btn" onclick="deleteAsset(${a.id})" style="color:var(--color-text-danger);"><i class="ti ti-trash" style="font-size:15px;vertical-align:-3px;margin-right:4px;"></i>Löschen</button>
     </div>`;
-  showView('detail');
+  pushView('detail');
 }
 
-function showForm(){ editingId=null; duplicatingFrom=null; renderForm(); showView('form'); }
-function editAsset(id){ editingId=id; duplicatingFrom=null; renderForm(); showView('form'); }
-function duplicateAsset(id){ editingId=null; duplicatingFrom=id; renderForm(); showView('form'); }
+function showForm(){ editingId=null; duplicatingFrom=null; renderForm(); pushView('form'); }
+function editAsset(id){ editingId=id; duplicatingFrom=null; renderForm(); pushView('form'); }
+function duplicateAsset(id){ editingId=null; duplicatingFrom=id; renderForm(); pushView('form'); }
 
 function renderForm(){
   let a;
   if(editingId)a=assets.find(x=>x.id===editingId);
   else if(duplicatingFrom){const src=assets.find(x=>x.id===duplicatingFrom);a={...src,inv:nextFreeInv(src.inv),notizen:''};}
-  else a={inv:'',marke:'',modell:'',typ:'Stapler',spezi:'',bj:new Date().getFullYear(),bh:0,intervall:500,lastService:0,uvvBis:'',reinIntervall:13,letzteReinigung:todayISO(),notizen:''};
+  else a={inv:'',marke:'',modell:'',typ:'Stapler',spezi:'',bj:new Date().getFullYear(),bh:0,intervall:500,lastService:0,uvvBis:'',letzteAblesung:todayISO(),ableseIntervallTage:DEFAULT_ABLESE_TAGE,notizen:''};
   const title=editingId?'Asset bearbeiten':duplicatingFrom?'Asset duplizieren':'Asset hinzufügen';
   document.getElementById('form-content').innerHTML=`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;"><button class="icon-btn" onclick="cancelForm()"><i class="ti ti-x" style="font-size:18px;"></i></button><h2 style="font-size:19px;font-weight:600;">${title}</h2></div>
-    <div class="field"><label>Inventarnummer *</label><input id="f-inv" value="${a.inv}" placeholder="z. B. ST-44"></div>
+    <div class="field"><label>Inventarnummer *</label><input id="f-inv" value="${a.inv}" placeholder="z. B. SK-44"></div>
     ${!editingId?`<div class="field" style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);"><label style="display:flex;align-items:center;gap:6px;"><i class="ti ti-copy" style="font-size:14px;"></i>Anzahl auf einmal anlegen</label><input id="f-count" type="number" min="1" max="100" value="1" oninput="updateCountPreview()"><p id="count-preview" style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px;">Bei mehr als 1 wird die Inventarnummer automatisch hochgezählt</p></div>`:''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field"><label>Marke *</label><input id="f-marke" value="${a.marke}" placeholder="Linde"></div><div class="field"><label>Modell</label><input id="f-modell" value="${a.modell}" placeholder="H30"></div></div>
     <div class="field"><label>Typ</label><select id="f-typ">${['Stapler','Reachstacker','Anbau','Ameise','Sonstiges'].map(t=>`<option ${a.typ===t?'selected':''}>${t}</option>`).join('')}</select></div>
     <div class="field"><label>Spezifikation</label><input id="f-spezi" value="${a.spezi}" placeholder="Diesel 5 t"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field"><label>Baujahr</label><input id="f-bj" type="number" value="${a.bj||''}"></div><div class="field"><label>Betriebsstunden</label><input id="f-bh" type="number" value="${a.bh}"></div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field"><label>Service-Intervall (h)</label><input id="f-intervall" type="number" value="${a.intervall}"></div><div class="field"><label>Letzter Service (Bh)</label><input id="f-lastservice" type="number" value="${a.lastService}"></div></div>
-    <div class="field"><label>UVV gültig bis</label><input id="f-uvv" type="date" value="${a.uvvBis}"></div>
     <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);margin-bottom:12px;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;"><i class="ti ti-spray" style="font-size:14px;"></i>Reinigung</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;"><i class="ti ti-clock-hour-4" style="font-size:14px;"></i>Betriebsstunden-Ablesung</label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="field" style="margin-bottom:0;"><label>Intervall (Tage)</label><input id="f-reinint" type="number" min="0" value="${a.reinIntervall||''}" placeholder="z. B. 13"></div>
-        <div class="field" style="margin-bottom:0;"><label>Zuletzt gereinigt</label><input id="f-reinletzte" type="date" value="${a.letzteReinigung||''}"></div>
+        <div class="field" style="margin-bottom:0;"><label>Intervall (Tage)</label><input id="f-ableseint" type="number" min="1" value="${a.ableseIntervallTage||DEFAULT_ABLESE_TAGE}"></div>
+        <div class="field" style="margin-bottom:0;"><label>Zuletzt abgelesen</label><input id="f-abgelesen" type="date" value="${a.letzteAblesung||''}"></div>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="field"><label>Service-Intervall (h)</label><input id="f-intervall" type="number" value="${a.intervall}"></div><div class="field"><label>Letzter Service (Bh)</label><input id="f-lastservice" type="number" value="${a.lastService}"></div></div>
+    <div class="field"><label>UVV gültig bis</label><input id="f-uvv" type="date" value="${a.uvvBis}"></div>
     <div class="field"><label>Notizen</label><textarea id="f-notizen" rows="3">${a.notizen||''}</textarea></div>
     <button onclick="saveAsset()" style="width:100%;padding:12px;margin-top:1rem;"><i class="ti ti-check" style="font-size:18px;vertical-align:-3px;margin-right:8px;"></i>Speichern</button>`;
 }
@@ -316,10 +423,10 @@ function updateCountPreview(){
   const nums=generateNumbers(inv,Math.min(count,100));
   el.innerHTML=count<=3?`Wird angelegt als: <strong style="color:var(--color-text-primary);">${nums.join(', ')}</strong>`:`Wird angelegt als: <strong style="color:var(--color-text-primary);">${nums[0]}, ${nums[1]}, …, ${nums[nums.length-1]}</strong>`;
 }
-function cancelForm(){ editingId=null; duplicatingFrom=null; showView('dashboard'); }
+function cancelForm(){ editingId=null; duplicatingFrom=null; popToDashboard(); }
 function saveAsset(){
   const v=id=>{const el=document.getElementById(id);return el?el.value:'';};
-  const data={inv:v('f-inv').trim(),marke:v('f-marke').trim(),modell:v('f-modell').trim(),typ:v('f-typ'),spezi:v('f-spezi').trim(),bj:parseInt(v('f-bj'))||null,bh:parseInt(v('f-bh'))||0,intervall:parseInt(v('f-intervall'))||0,lastService:parseInt(v('f-lastservice'))||0,uvvBis:v('f-uvv'),reinIntervall:parseInt(v('f-reinint'))||0,letzteReinigung:v('f-reinletzte'),notizen:v('f-notizen').trim()};
+  const data={inv:v('f-inv').trim(),marke:v('f-marke').trim(),modell:v('f-modell').trim(),typ:v('f-typ'),spezi:v('f-spezi').trim(),bj:parseInt(v('f-bj'))||null,bh:parseInt(v('f-bh'))||0,intervall:parseInt(v('f-intervall'))||0,lastService:parseInt(v('f-lastservice'))||0,uvvBis:v('f-uvv'),letzteAblesung:v('f-abgelesen'),ableseIntervallTage:parseInt(v('f-ableseint'))||DEFAULT_ABLESE_TAGE,notizen:v('f-notizen').trim()};
   if(!data.inv||!data.marke){alert('Inventarnummer und Marke sind Pflichtfelder.');return;}
   if(editingId){const i=assets.findIndex(a=>a.id===editingId);assets[i]={...assets[i],...data};}
   else{
@@ -330,10 +437,18 @@ function saveAsset(){
     const startId=(Math.max(0,...assets.map(a=>a.id))||0)+1;
     for(let i=0;i<count;i++)assets.push({...data,id:startId+i,inv:nums[i]});
   }
-  saveStorage(); editingId=null; duplicatingFrom=null; showView('dashboard');
+  saveStorage(); editingId=null; duplicatingFrom=null; popToDashboard();
 }
-function deleteAsset(id){ if(!confirm('Asset wirklich löschen?'))return; assets=assets.filter(a=>a.id!==id); saveStorage(); showView('dashboard'); }
+function deleteAsset(id){ if(!confirm('Asset wirklich löschen?'))return; assets=assets.filter(a=>a.id!==id); saveStorage(); popToDashboard(); }
 function showView(name){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+name).classList.add('active'); if(name==='dashboard')renderDashboard(); window.scrollTo(0,0); }
+// Navigation mit Browser-History: Hardware-/Wisch-Zurück geht zur Liste statt die App zu schließen.
+function pushView(name){
+  if(viewDepth===0){ history.pushState({view:name},''); viewDepth=1; }
+  else { history.replaceState({view:name},''); }   // Unteransicht↔Unteransicht: kein Stack-Aufbau
+  showView(name);
+}
+function popToDashboard(){ if(viewDepth>0)history.back(); else showView('dashboard'); }
+window.addEventListener('popstate',()=>{ viewDepth=0; showView('dashboard'); });
 
 function importExcel(){ document.getElementById('excel-input').click(); }
 document.getElementById('excel-input').addEventListener('change',(e)=>{
@@ -345,21 +460,23 @@ document.getElementById('excel-input').addEventListener('change',(e)=>{
       const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{raw:false});
       const find=(row,...names)=>{for(const n of names)for(const k of Object.keys(row))if(k.toLowerCase().includes(n.toLowerCase()))return row[k];return '';};
       const pDate=(v)=>{if(!v)return'';if(typeof v==='string'&&/^\d{4}-\d{2}-\d{2}/.test(v))return v.slice(0,10);const d=new Date(v);return isNaN(d)?'':d.toISOString().slice(0,10);};
-      assets=rows.map((row,i)=>({id:i+1,inv:String(find(row,'inventarnummer','inv','kennung','id')||''),marke:String(find(row,'marke','hersteller')||''),modell:String(find(row,'modell','typbez')||''),typ:String(find(row,'typ','kategorie')||'Stapler'),spezi:String(find(row,'spezi','beschreibung','detail')||''),bj:parseInt(find(row,'baujahr','bj'))||null,bh:parseInt(find(row,'betriebsstunden','stunden','bh'))||0,intervall:parseInt(find(row,'service-int','intervall'))||500,lastService:parseInt(find(row,'letzter service','last service'))||0,uvvBis:pDate(find(row,'uvv','tüv','prüfung')),reinIntervall:parseInt(find(row,'reinigungsintervall','reinint'))||0,letzteReinigung:pDate(find(row,'zuletzt gereinigt','letzte reinigung')),notizen:String(find(row,'notiz','bemerkung')||'')}));
+      assets=rows.map((row,i)=>({id:i+1,inv:String(find(row,'inventarnummer','inv','kennung','id')||''),marke:String(find(row,'marke','hersteller')||''),modell:String(find(row,'modell','typbez')||''),typ:String(find(row,'typ','kategorie')||'Stapler'),spezi:String(find(row,'spezi','beschreibung','detail')||''),bj:parseInt(find(row,'baujahr','bj'))||null,bh:parseInt(find(row,'betriebsstunden','stunden','bh'))||0,intervall:parseInt(find(row,'service-int','intervall'))||500,lastService:parseInt(find(row,'letzter service','last service'))||0,uvvBis:pDate(find(row,'uvv','tüv','prüfung')),reinIntervall:parseInt(find(row,'reinigungsintervall','reinint'))||0,letzteReinigung:pDate(find(row,'zuletzt gereinigt','letzte reinigung')),letzteAblesung:pDate(find(row,'abgelesen','ablesung')),ableseIntervallTage:parseInt(find(row,'ablese-int','ableseintervall'))||DEFAULT_ABLESE_TAGE,notizen:String(find(row,'notiz','bemerkung')||'')}));
       saveStorage(); renderDashboard(); alert(`${assets.length} Assets importiert`);
     }catch(err){alert('Fehler beim Import: '+err.message);}
   };
   reader.readAsArrayBuffer(file);
 });
 function exportExcel(){
-  const data=assets.map(a=>({'Inventarnummer':a.inv,'Marke':a.marke,'Modell':a.modell,'Typ':a.typ,'Spezifikation':a.spezi,'Baujahr':a.bj,'Betriebsstunden':a.bh,'Service-Intervall (h)':a.intervall,'Letzter Service (Bh)':a.lastService,'UVV gültig bis':a.uvvBis,'Reinigungsintervall (Tage)':a.reinIntervall,'Zuletzt gereinigt':a.letzteReinigung,'Notizen':a.notizen}));
+  const data=assets.map(a=>({'Inventarnummer':a.inv,'Marke':a.marke,'Modell':a.modell,'Typ':a.typ,'Spezifikation':a.spezi,'Baujahr':a.bj,'Betriebsstunden':a.bh,'Service-Intervall (h)':a.intervall,'Letzter Service (Bh)':a.lastService,'UVV gültig bis':a.uvvBis,'Reinigungsintervall (Tage)':a.reinIntervall,'Zuletzt gereinigt':a.letzteReinigung,'Zuletzt abgelesen':a.letzteAblesung,'Ablese-Intervall (Tage)':a.ableseIntervallTage,'Notizen':a.notizen}));
   const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Fuhrpark'); XLSX.writeFile(wb,'fuhrpark_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
-function saveStorage(){ try{ localStorage.setItem('fuhrpark_assets',JSON.stringify(assets)); }catch(e){} }
-function loadStorage(){ try{ const v=localStorage.getItem('fuhrpark_assets'); if(v){const p=JSON.parse(v);if(Array.isArray(p)&&p.length)assets=p;} }catch(e){} renderDashboard(); }
+const STORAGE_KEY='fuhrpark_assets_v2';
+function saveStorage(){ try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(assets)); }catch(e){} }
+function loadStorage(){ try{ localStorage.removeItem('fuhrpark_assets'); const v=localStorage.getItem(STORAGE_KEY); if(v!==null){const p=JSON.parse(v);if(Array.isArray(p))assets=p;} }catch(e){} renderDashboard(); }
 
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }); }
+history.replaceState({view:'dashboard'},'');
 loadStorage();
 </script>
 </body>
